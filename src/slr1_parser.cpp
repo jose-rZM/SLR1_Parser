@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
+#include <vector>
 
 #include "../include/grammar.hpp"
 #include "../include/slr1_parser.hpp"
@@ -15,6 +16,17 @@ SLR1Parser::SLR1Parser(const std::string& grammar_file, std::string text_file)
     : gr_(grammar_file), text_file_(std::move(text_file)) {}
 
 SLR1Parser::SLR1Parser(const std::string& grammar_file) : gr_(grammar_file) {}
+
+std::vector<Lr0Item> SLR1Parser::allItems() {
+    std::vector<Lr0Item> items;
+    for (const auto& rule : gr_.g_) {
+        for (const auto& production : rule.second) {
+            for (unsigned int i = 0; i <= production.size(); ++i)
+                items.emplace_back(rule.first, production, i);
+        }
+    }
+    return items;
+}
 
 std::unordered_set<std::string>
 SLR1Parser::header(const std::vector<std::string>& rule) {

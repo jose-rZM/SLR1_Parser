@@ -2,13 +2,15 @@
 #include <unordered_set>
 
 #include "grammar.hpp"
+#include "lr0_item.hpp"
 
 class SLR1Parser {
   public:
     SLR1Parser(grammar gr, std::string text_file);
     SLR1Parser(const std::string& grammar_file, std::string text_file);
     explicit SLR1Parser(const std::string& grammar_file);
-    bool parse();
+    std::vector<Lr0Item> allItems();
+    bool                 parse();
 
   private:
     /**
