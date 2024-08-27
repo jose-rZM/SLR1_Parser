@@ -12,7 +12,7 @@ std::string Lr0Item::nextToDot() const {
     if (dot == consequent.size()) {
         return symbol_table::EPSILON_;
     }
-    return consequent[dot + 1];
+    return consequent[dot];
 }
 
 void Lr0Item::advanceDot() {

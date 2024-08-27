@@ -6,7 +6,7 @@
 struct Lr0Item {
     std::string              antecedent;
     std::vector<std::string> consequent;
-    int                      dot = -1;
+    unsigned int             dot = 0;
 
     Lr0Item(std::string antecedent, std::vector<std::string>& consequent);
     std::string nextToDot() const;
