@@ -14,7 +14,7 @@ int main(int argc, char* argv[]) {
             std::cout << "Grammar is LL1." << std::endl;
         } else if (argc == 3) {
             grammar_filename = argv[1];
-            text_filename = argv[2];
+            text_filename    = argv[2];
             LL1Parser ll1_p{grammar_filename, text_filename};
             std::cout << "Input:" << std::endl;
             std::ifstream file;
