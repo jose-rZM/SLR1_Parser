@@ -1,0 +1,17 @@
+terminal ac "[";
+terminal cp "]";
+terminal comma ",";
+terminal pyc ";";
+terminal elem "a";
+start with S;
+;
+S -> E$;
+E -> ac A cp;
+A ->;
+A -> BC;
+B -> elem D;
+D -> comma B;
+D ->;
+C -> pyc BC;
+C ->;
+;
