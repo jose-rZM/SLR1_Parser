@@ -14,4 +14,11 @@ struct Lr0Item {
     std::string nextToDot() const;
     void        printItem() const;
     void        advanceDot();
+    bool        operator==(const Lr0Item& other) const;
 };
+
+namespace std {
+template <> struct hash<Lr0Item> {
+    size_t operator()(const Lr0Item& item) const;
+};
+} // namespace std

@@ -9,8 +9,8 @@ class SLR1Parser {
     SLR1Parser(grammar gr, std::string text_file);
     SLR1Parser(const std::string& grammar_file, std::string text_file);
     explicit SLR1Parser(const std::string& grammar_file);
-    std::vector<Lr0Item> allItems();
-    bool                 parse();
+    std::unordered_set<Lr0Item> allItems();
+    bool                        parse();
 
   private:
     /**

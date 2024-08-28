@@ -1,3 +1,4 @@
+#include <functional>
 #include <iostream> // DEBUG ONLY
 #include <string>
 #include <utility>
@@ -38,3 +39,21 @@ void Lr0Item::printItem() const {
     }
     std::cout << "]";
 }
+
+bool Lr0Item::operator==(const Lr0Item& other) const {
+    return antecedent == other.antecedent && consequent == other.consequent &&
+           dot == other.dot;
+}
+
+namespace std {
+std::size_t hash<Lr0Item>::operator()(const Lr0Item& item) const {
+    std::size_t hashAntecedent = std::hash<std::string>()(item.antecedent);
+    std::size_t hashDot        = std::hash<unsigned int>()(item.dot);
+    std::size_t hashConsequent = 0;
+    for (const auto& s : item.consequent) {
+        hashConsequent ^= std::hash<std::string>()(s) + 0x9e3779b9 +
+                          (hashConsequent << 6) + (hashConsequent >> 2);
+    }
+    return hashAntecedent ^ (hashDot << 1) ^ (hashConsequent << 1);
+}
+} // namespace std
