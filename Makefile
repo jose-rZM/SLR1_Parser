@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -Wall -Wextra -Werror -Iinclude -std=c++20
+CXXFLAGS = -Wall -Wextra -Werror -Iinclude -std=c++20 
 
 SRC_DIR = src
 INCLUDE_DIR = include
@@ -27,4 +27,6 @@ fclean: clean
 format:
 	@find . -name "*.cpp" -o -name "*.hpp" | xargs clang-format -i
 
-.PHONY: all clean fclean format
+re: fclean all
+
+.PHONY: all clean fclean format re

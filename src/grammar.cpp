@@ -120,9 +120,6 @@ std::vector<std::string> grammar::split(const std::string& s) {
 void grammar::add_rule(const std::string& antecedent,
                        const std::string& consequent) {
     std::vector<std::string> splitted_consequent{split(consequent)};
-    if (has_left_recursion(antecedent, splitted_consequent)) {
-        throw GrammarError("Grammar has left recursion, it can't be LL1.");
-    }
     g_[antecedent].push_back(splitted_consequent);
 }
 

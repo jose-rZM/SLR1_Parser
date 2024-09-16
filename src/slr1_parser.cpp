@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <stack>
 #include <string>
 #include <unordered_map>
@@ -26,6 +27,36 @@ std::unordered_set<Lr0Item> SLR1Parser::allItems() {
         }
     }
     return items;
+}
+
+void make_parser() {}
+
+void SLR1Parser::closure(std::unordered_set<Lr0Item>& items) const {
+    std::unordered_set<std::string> visited;
+    closureUtil(items, items.size(), visited);
+}
+
+void SLR1Parser::closureUtil(std::unordered_set<Lr0Item>&     items,
+                             unsigned int                     size,
+                             std::unordered_set<std::string>& visited) const {
+    std::unordered_set<Lr0Item> newItems;
+
+    for (const auto& item : items) {
+        std::string next = item.nextToDot();
+        if (!symbol_table::is_terminal(next) &&
+            std::find(visited.cbegin(), visited.cend(), next) ==
+                visited.cend()) {
+            std::vector<production> rules = gr_.g_.at(next);
+            std::for_each(rules.begin(), rules.end(),
+                          [&](const auto& rule) -> void {
+                              newItems.insert({item.nextToDot(), rule, 0});
+                          });
+            visited.insert(next);
+        }
+    }
+    items.insert(newItems.begin(), newItems.end());
+    if (size != items.size())
+        closureUtil(items, items.size(), visited);
 }
 
 std::unordered_set<std::string>
