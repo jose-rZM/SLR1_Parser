@@ -6,8 +6,9 @@
 #include "lr0_item.hpp"
 
 class SLR1Parser {
-  public:
+   public:
     enum class Action { Shift, Reduce, Accept, Empty };
+
     using action_table =
         std::unordered_map<unsigned int,
                            std::unordered_map<std::string, Action>>;
@@ -18,7 +19,7 @@ class SLR1Parser {
     SLR1Parser(const std::string& grammar_file, std::string text_file);
     explicit SLR1Parser(const std::string& grammar_file);
     std::unordered_set<Lr0Item> allItems();
-    bool                        parse();
+    bool parse();
     void closure(std::unordered_set<Lr0Item>& items) const;
     void closureUtil(std::unordered_set<Lr0Item>& items, unsigned int size,
                      std::unordered_set<std::string>& visited) const;
@@ -30,8 +31,8 @@ class SLR1Parser {
      * could end with an infinite loop. For example: A -> A & A, A -> ( A ). The
      * grammar obviously is not LL1, but this will provoke an infinite loop.
      */
-    std::unordered_set<std::string>
-    header(const std::vector<std::string>& rule);
+    std::unordered_set<std::string> header(
+        const std::vector<std::string>& rule);
     /**
      *
      * @param arg symbol to calculate next symbols for
@@ -44,16 +45,16 @@ class SLR1Parser {
      * @param visited symbols (avoid infinite recursion)
      * @param next_symbols next symbols accumulated
      */
-    void follow_util(const std::string&               arg,
+    void follow_util(const std::string& arg,
                      std::unordered_set<std::string>& visited,
                      std::unordered_set<std::string>& next_symbols);
 
     void make_parser();
 
-    grammar                     gr_;
-    std::string                 grammar_file_;
-    std::string                 text_file_;
-    action_table                actions_;
-    transition_table            transitions_;
+    grammar gr_;
+    std::string grammar_file_;
+    std::string text_file_;
+    action_table actions_;
+    transition_table transitions_;
     std::unordered_set<Lr0Item> states_;
 };
