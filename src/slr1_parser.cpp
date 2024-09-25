@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cstddef>
 #include <stack>
 #include <string>
 #include <unordered_map>
@@ -29,15 +30,35 @@ std::unordered_set<Lr0Item> SLR1Parser::allItems() {
     return items;
 }
 
-void make_parser() {}
+void SLR1Parser::make_parser() {
+    std::unordered_set<unsigned int> visited;
+    unsigned int current = 0;
+    visited.insert(current);
+    state qi;
+    qi.id = 0;
+    for (const auto& rule : gr_.g_) {
+        std::string antecedent = rule.first;
+        for (const auto& production : rule.second) {
+            qi.items.insert({antecedent, production, 0});
+        }
+    }
+    qi.items.clear();
+    visited.insert(0);
+    size_t oldSize = 0;
+    size_t newSize;
+    std::unordered_set<std::string> nextSymbols;
+    size_t i = 1;
+    do {
+        for () } while (oldSize != newSize)
+}
 
 void SLR1Parser::closure(std::unordered_set<Lr0Item>& items) const {
     std::unordered_set<std::string> visited;
     closureUtil(items, items.size(), visited);
 }
 
-void SLR1Parser::closureUtil(std::unordered_set<Lr0Item>&     items,
-                             unsigned int                     size,
+void SLR1Parser::closureUtil(std::unordered_set<Lr0Item>& items,
+                             unsigned int size,
                              std::unordered_set<std::string>& visited) const {
     std::unordered_set<Lr0Item> newItems;
 
@@ -55,13 +76,12 @@ void SLR1Parser::closureUtil(std::unordered_set<Lr0Item>&     items,
         }
     }
     items.insert(newItems.begin(), newItems.end());
-    if (size != items.size())
-        closureUtil(items, items.size(), visited);
+    if (size != items.size()) closureUtil(items, items.size(), visited);
 }
 
-std::unordered_set<std::string>
-SLR1Parser::header(const std::vector<std::string>& rule) {
-    std::unordered_set<std::string>      current_header;
+std::unordered_set<std::string> SLR1Parser::header(
+    const std::vector<std::string>& rule) {
+    std::unordered_set<std::string> current_header;
     std::stack<std::vector<std::string>> symbol_stack;
     symbol_stack.push(rule);
 
@@ -103,7 +123,7 @@ std::unordered_set<std::string> SLR1Parser::follow(const std::string& arg) {
     return next_symbols;
 }
 
-void SLR1Parser::follow_util(const std::string&               arg,
+void SLR1Parser::follow_util(const std::string& arg,
                              std::unordered_set<std::string>& visited,
                              std::unordered_set<std::string>& next_symbols) {
     if (visited.find(arg) != visited.cend()) {
