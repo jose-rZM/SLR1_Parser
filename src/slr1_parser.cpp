@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cstddef>
+#include <iostream>
 #include <stack>
 #include <string>
 #include <unordered_map>
@@ -30,6 +31,19 @@ std::unordered_set<Lr0Item> SLR1Parser::allItems() {
     return items;
 }
 
+void SLR1Parser::debugStates() {
+    for (const auto& s : states_) {
+        std::cout << "State ID: " << s.id << std::endl;
+        std::cout << "Items:" << std::endl;
+        for (const auto& item : s.items) {
+            std::cout << "\t";
+            item.printItem();
+            std::cout << std::endl;
+        }
+        std::cout << "-----------------------------" << std::endl;
+    }
+}
+
 void SLR1Parser::makeInitialState() {
     state initial;
     initial.id = 0;
@@ -45,23 +59,21 @@ void SLR1Parser::makeInitialState() {
 void SLR1Parser::make_parser() {
     makeInitialState();
     std::unordered_set<unsigned int> visited;
-    visited.insert(0);
+    std::stack<unsigned int> pending;
+    pending.push(0);
     unsigned int current = 0;
-    size_t       oldSize = states_.size();
-    size_t       newSize = oldSize;
     size_t       i       = 1;
 
     do {
-        oldSize = newSize;
         std::unordered_set<std::string> nextSymbols;
-
+        current = pending.top();
+        pending.pop();
         auto it = std::find_if(
             states_.begin(), states_.end(),
             [current](const state& st) { return st.id == current; });
         if (it == states_.end()) {
             break;
         }
-
         const state& qi = *it;
 
         // Collect symbols next to dot
@@ -69,7 +81,7 @@ void SLR1Parser::make_parser() {
                       [&](const Lr0Item& item) -> void {
                           std::string next = item.nextToDot();
                           if (next != symbol_table::EPSILON_) {
-                              nextSymbols.insert(item.nextToDot());
+                              nextSymbols.insert(next);
                           }
                       });
         // --------------------
@@ -77,7 +89,6 @@ void SLR1Parser::make_parser() {
         for (const std::string& symbol : nextSymbols) {
             state newState;
             newState.id = i;
-
             for (const auto& item : qi.items) {
                 if (item.nextToDot() == symbol) {
                     Lr0Item newItem = item;
@@ -89,13 +100,12 @@ void SLR1Parser::make_parser() {
             closure(newState.items);
             auto result = states_.insert(newState);
             if (result.second) {
-                visited.insert(i);
+                pending.push(i);
                 ++i;
             }
         }
         current++;
-        newSize = states_.size();
-    } while (oldSize != newSize);
+    } while (!pending.empty());
 }
 
 void SLR1Parser::closure(std::unordered_set<Lr0Item>& items) const {

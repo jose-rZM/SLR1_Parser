@@ -21,6 +21,7 @@ class SLR1Parser {
     explicit SLR1Parser(const std::string& grammar_file);
     std::unordered_set<Lr0Item> allItems();
     bool                        parse();
+    void                        debugStates();
     void closure(std::unordered_set<Lr0Item>& items) const;
     void closureUtil(std::unordered_set<Lr0Item>& items, unsigned int size,
                      std::unordered_set<std::string>& visited) const;
