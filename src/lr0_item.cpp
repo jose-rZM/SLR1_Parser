@@ -2,7 +2,7 @@
 #include <boost/functional/hash.hpp>
 #include <cstddef>
 #include <functional>
-#include <iostream>  // DEBUG ONLY
+#include <iostream> // DEBUG ONLY
 #include <string>
 #include <utility>
 #include <vector>
@@ -15,8 +15,7 @@ Lr0Item::Lr0Item(std::string antecedent, std::vector<std::string> consequent)
 
 Lr0Item::Lr0Item(std::string antecedent, std::vector<std::string> consequent,
                  unsigned int dot)
-    : antecedent(std::move(antecedent)),
-      consequent(std::move(consequent)),
+    : antecedent(std::move(antecedent)), consequent(std::move(consequent)),
       dot(dot) {}
 
 std::string Lr0Item::nextToDot() const {
@@ -26,7 +25,9 @@ std::string Lr0Item::nextToDot() const {
     return consequent[dot];
 }
 
-void Lr0Item::advanceDot() { dot++; }
+void Lr0Item::advanceDot() {
+    dot++;
+}
 
 void Lr0Item::printItem() const {
     std::cout << "[ " << antecedent << " -> ";
@@ -51,11 +52,14 @@ namespace std {
 std::size_t hash<Lr0Item>::operator()(const Lr0Item& item) const {
     std::size_t seed = 0;
 
-    boost::hash_combine(seed, boost::hash_value(item.antecedent));
-    boost::hash_combine(seed, boost::hash_range(item.consequent.begin(),
-                                                item.consequent.end()));
-    boost::hash_combine(seed, item.dot);
+    seed ^= std::hash<std::string>()(item.antecedent) + 0x9e3779b9 +
+            (seed << 6) + (seed >> 2);
+    for (const auto& str : item.consequent) {
+        seed ^= std::hash<std::string>()(str) + 0x9e3779b9 + (seed << 6) +
+                (seed >> 2);
+    }
+    seed ^= std::hash<int>()(item.dot) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
 
     return seed;
 }
-}  // namespace std
+} // namespace std

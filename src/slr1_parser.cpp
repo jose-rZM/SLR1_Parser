@@ -30,26 +30,72 @@ std::unordered_set<Lr0Item> SLR1Parser::allItems() {
     return items;
 }
 
-void SLR1Parser::make_parser() {
-    std::unordered_set<unsigned int> visited;
-    unsigned int current = 0;
-    visited.insert(current);
-    state qi;
-    qi.id = 0;
+void SLR1Parser::makeInitialState() {
+    state initial;
+    initial.id = 0;
     for (const auto& rule : gr_.g_) {
         std::string antecedent = rule.first;
         for (const auto& production : rule.second) {
-            qi.items.insert({antecedent, production, 0});
+            initial.items.insert({antecedent, production, 0});
         }
     }
-    qi.items.clear();
+    states_.insert(initial);
+}
+
+void SLR1Parser::make_parser() {
+    makeInitialState();
+    std::unordered_set<unsigned int> visited;
     visited.insert(0);
-    size_t oldSize = 0;
-    size_t newSize;
-    std::unordered_set<std::string> nextSymbols;
-    size_t i = 1;
+    unsigned int current = 0;
+    size_t       oldSize = states_.size();
+    size_t       newSize = oldSize;
+    size_t       i       = 1;
+
     do {
-        for () } while (oldSize != newSize)
+        oldSize = newSize;
+        std::unordered_set<std::string> nextSymbols;
+
+        auto it = std::find_if(
+            states_.begin(), states_.end(),
+            [current](const state& st) { return st.id == current; });
+        if (it == states_.end()) {
+            break;
+        }
+
+        const state& qi = *it;
+
+        // Collect symbols next to dot
+        std::for_each(qi.items.begin(), qi.items.end(),
+                      [&](const Lr0Item& item) -> void {
+                          std::string next = item.nextToDot();
+                          if (next != symbol_table::EPSILON_) {
+                              nextSymbols.insert(item.nextToDot());
+                          }
+                      });
+        // --------------------
+        // Consume symbols next to dot
+        for (const std::string& symbol : nextSymbols) {
+            state newState;
+            newState.id = i;
+
+            for (const auto& item : qi.items) {
+                if (item.nextToDot() == symbol) {
+                    Lr0Item newItem = item;
+                    newItem.advanceDot();
+                    newState.items.insert(newItem);
+                }
+            }
+
+            closure(newState.items);
+            auto result = states_.insert(newState);
+            if (result.second) {
+                visited.insert(i);
+                ++i;
+            }
+        }
+        current++;
+        newSize = states_.size();
+    } while (oldSize != newSize);
 }
 
 void SLR1Parser::closure(std::unordered_set<Lr0Item>& items) const {
@@ -57,8 +103,8 @@ void SLR1Parser::closure(std::unordered_set<Lr0Item>& items) const {
     closureUtil(items, items.size(), visited);
 }
 
-void SLR1Parser::closureUtil(std::unordered_set<Lr0Item>& items,
-                             unsigned int size,
+void SLR1Parser::closureUtil(std::unordered_set<Lr0Item>&     items,
+                             unsigned int                     size,
                              std::unordered_set<std::string>& visited) const {
     std::unordered_set<Lr0Item> newItems;
 
@@ -67,7 +113,7 @@ void SLR1Parser::closureUtil(std::unordered_set<Lr0Item>& items,
         if (!symbol_table::is_terminal(next) &&
             std::find(visited.cbegin(), visited.cend(), next) ==
                 visited.cend()) {
-            std::vector<production> rules = gr_.g_.at(next);
+            const std::vector<production>& rules = gr_.g_.at(next);
             std::for_each(rules.begin(), rules.end(),
                           [&](const auto& rule) -> void {
                               newItems.insert({item.nextToDot(), rule, 0});
@@ -76,12 +122,13 @@ void SLR1Parser::closureUtil(std::unordered_set<Lr0Item>& items,
         }
     }
     items.insert(newItems.begin(), newItems.end());
-    if (size != items.size()) closureUtil(items, items.size(), visited);
+    if (size != items.size())
+        closureUtil(items, items.size(), visited);
 }
 
-std::unordered_set<std::string> SLR1Parser::header(
-    const std::vector<std::string>& rule) {
-    std::unordered_set<std::string> current_header;
+std::unordered_set<std::string>
+SLR1Parser::header(const std::vector<std::string>& rule) {
+    std::unordered_set<std::string>      current_header;
     std::stack<std::vector<std::string>> symbol_stack;
     symbol_stack.push(rule);
 
@@ -123,7 +170,7 @@ std::unordered_set<std::string> SLR1Parser::follow(const std::string& arg) {
     return next_symbols;
 }
 
-void SLR1Parser::follow_util(const std::string& arg,
+void SLR1Parser::follow_util(const std::string&               arg,
                              std::unordered_set<std::string>& visited,
                              std::unordered_set<std::string>& next_symbols) {
     if (visited.find(arg) != visited.cend()) {
