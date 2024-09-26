@@ -1,5 +1,5 @@
+#include <map>
 #include <string>
-#include <unordered_map>
 #include <unordered_set>
 
 #include "grammar.hpp"
@@ -10,18 +10,16 @@ class SLR1Parser {
   public:
     enum class Action { Shift, Reduce, Accept, Empty };
 
-    using action_table =
-        std::unordered_map<unsigned int,
-                           std::unordered_map<std::string, Action>>;
+    using action_table = std::map<unsigned int, std::map<std::string, Action>>;
     using transition_table =
-        std::unordered_map<unsigned int,
-                           std::unordered_map<std::string, unsigned int>>;
+        std::map<unsigned int, std::map<std::string, unsigned int>>;
     SLR1Parser(grammar gr, std::string text_file);
     SLR1Parser(const std::string& grammar_file, std::string text_file);
     explicit SLR1Parser(const std::string& grammar_file);
     std::unordered_set<Lr0Item> allItems();
     bool                        parse();
     void                        debugStates();
+    void                        debugTable();
     void closure(std::unordered_set<Lr0Item>& items) const;
     void closureUtil(std::unordered_set<Lr0Item>& items, unsigned int size,
                      std::unordered_set<std::string>& visited) const;

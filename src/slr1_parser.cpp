@@ -1,9 +1,10 @@
 #include <algorithm>
 #include <cstddef>
+#include <iomanip>
 #include <iostream>
+#include <map>
 #include <stack>
 #include <string>
-#include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -44,6 +45,45 @@ void SLR1Parser::debugStates() {
     }
 }
 
+void SLR1Parser::debugTable() {
+    std::map<std::string, bool> columns;
+    
+    for (const auto& row : transitions_) {
+        for (const auto& cell : row.second) {
+            columns[cell.first] = true;
+        }
+    }
+
+    std::cout << std::setw(10) << "Row |";
+    for (const auto& col : columns) {
+        std::cout << std::setw(10) << symbol_table::st_[col.first].second << " |";
+    }
+    std::cout << std::endl;
+
+    std::cout << std::string(10 + (columns.size() * 13), '-') << std::endl;
+
+    for (unsigned int state = 0; state < states_.size(); ++state) {
+        std::cout << std::setw(10) << state << " |";
+
+        auto rowIt = transitions_.find(state);
+        if (rowIt != transitions_.end() && !rowIt->second.empty()) {
+            for (const auto& col : columns) {
+                auto cellIt = rowIt->second.find(col.first);
+                if (cellIt != rowIt->second.end()) {
+                    std::cout << std::setw(10) << cellIt->second << " |";
+                } else {
+                    std::cout << std::setw(10) << "-" << " |";
+                }
+            }
+        } else {
+            for (const auto& _ : columns) {
+                std::cout << std::setw(10) << "-" << " |";
+            }
+        }
+        std::cout << std::endl;
+    }
+}
+
 void SLR1Parser::makeInitialState() {
     state initial;
     initial.id = 0;
@@ -58,7 +98,6 @@ void SLR1Parser::makeInitialState() {
 
 void SLR1Parser::make_parser() {
     makeInitialState();
-    std::unordered_set<unsigned int> visited;
     std::stack<unsigned int> pending;
     pending.push(0);
     unsigned int current = 0;
@@ -70,22 +109,20 @@ void SLR1Parser::make_parser() {
         pending.pop();
         auto it = std::find_if(
             states_.begin(), states_.end(),
-            [current](const state& st) { return st.id == current; });
+            [current](const state& st) -> bool { return st.id == current; });
         if (it == states_.end()) {
             break;
         }
         const state& qi = *it;
 
-        // Collect symbols next to dot
         std::for_each(qi.items.begin(), qi.items.end(),
                       [&](const Lr0Item& item) -> void {
                           std::string next = item.nextToDot();
-                          if (next != symbol_table::EPSILON_) {
+                          if (next != symbol_table::EPSILON_ &&
+                              next != symbol_table::EOL_) {
                               nextSymbols.insert(next);
                           }
                       });
-        // --------------------
-        // Consume symbols next to dot
         for (const std::string& symbol : nextSymbols) {
             state newState;
             newState.id = i;
@@ -99,9 +136,26 @@ void SLR1Parser::make_parser() {
 
             closure(newState.items);
             auto result = states_.insert(newState);
+            std::map<std::string, unsigned int> column;
+
             if (result.second) {
                 pending.push(i);
+                if (transitions_.find(current) != transitions_.end()) {
+                    transitions_[current].insert({symbol, i});
+                } else {
+                    std::map<std::string, unsigned int> column;
+                    column.insert({symbol, i});
+                    transitions_.insert({current, column});
+                }
                 ++i;
+            } else {
+                if (transitions_.find(current) != transitions_.end()) {
+                    transitions_[current].insert({symbol, result.first->id});
+                } else {
+                    std::map<std::string, unsigned int> column;
+                    column.insert({symbol, result.first->id});
+                    transitions_.insert({current, column});
+                }
             }
         }
         current++;

@@ -15,5 +15,6 @@ int main(int argc, char** argv) {
     SLR1Parser  slrparser{grammar_file};
     slrparser.make_parser();
     slrparser.debugStates();
+    slrparser.debugTable();
     return (0);
 }
