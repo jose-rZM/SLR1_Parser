@@ -135,7 +135,7 @@ bool grammar::has_empty_production(const std::string& antecedent) {
 }
 
 std::vector<std::pair<const std::string, production>>
-grammar::filter_rules_by_consequent(const std::string& arg) {
+grammar::filter_rules_by_consequent(const std::string& arg) const {
     std::vector<std::pair<const std::string, production>> rules;
     for (const std::pair<const std::string, std::vector<production>>& rule :
          g_) {

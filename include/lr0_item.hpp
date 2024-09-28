@@ -14,6 +14,7 @@ struct Lr0Item {
     std::string nextToDot() const;
     void        printItem() const;
     void        advanceDot();
+    bool        isComplete() const;
     bool        operator==(const Lr0Item& other) const;
 };
 

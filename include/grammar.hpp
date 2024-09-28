@@ -38,7 +38,7 @@ struct grammar {
      * @return vector of rules with args as part of the consequent
      */
     std::vector<std::pair<const std::string, production>>
-    filter_rules_by_consequent(const std::string& arg);
+    filter_rules_by_consequent(const std::string& arg) const;
     /**
      * Prints the grammar
      */

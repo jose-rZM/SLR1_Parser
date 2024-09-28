@@ -16,13 +16,15 @@ class SLR1Parser {
     SLR1Parser(grammar gr, std::string text_file);
     SLR1Parser(const std::string& grammar_file, std::string text_file);
     explicit SLR1Parser(const std::string& grammar_file);
-    std::unordered_set<Lr0Item> allItems();
-    bool                        parse();
-    void                        debugStates();
-    void                        debugTable();
+    std::unordered_set<Lr0Item> allItems() const;
+    bool                        parse() const;
+    void                        debugStates() const;
+    void                        debugActions() const;
+    void                        debugTable() const;
     void closure(std::unordered_set<Lr0Item>& items) const;
     void closureUtil(std::unordered_set<Lr0Item>& items, unsigned int size,
                      std::unordered_set<std::string>& visited) const;
+    void solveLRConflicts(const state& st);
     /**
      *
      * @param rule
@@ -32,13 +34,13 @@ class SLR1Parser {
      * grammar obviously is not LL1, but this will provoke an infinite loop.
      */
     std::unordered_set<std::string>
-    header(const std::vector<std::string>& rule);
+    header(const std::vector<std::string>& rule) const;
     /**
      *
      * @param arg symbol to calculate next symbols for
      * @return Set of next symbols for the given arg
      */
-    std::unordered_set<std::string> follow(const std::string& arg);
+    std::unordered_set<std::string> follow(const std::string& arg) const;
     /**
      *
      * @param arg
@@ -47,7 +49,7 @@ class SLR1Parser {
      */
     void follow_util(const std::string&               arg,
                      std::unordered_set<std::string>& visited,
-                     std::unordered_set<std::string>& next_symbols);
+                     std::unordered_set<std::string>& next_symbols) const;
 
     void makeInitialState();
     void make_parser();

@@ -29,6 +29,10 @@ void Lr0Item::advanceDot() {
     dot++;
 }
 
+bool Lr0Item::isComplete() const {
+    return dot == consequent.size();
+}
+
 void Lr0Item::printItem() const {
     std::cout << "[ " << antecedent << " -> ";
     for (unsigned int i = 0; i < consequent.size(); ++i) {
