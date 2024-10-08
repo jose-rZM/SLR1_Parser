@@ -3,6 +3,7 @@
 #include <iomanip>
 #include <iostream>
 #include <map>
+#include <queue>
 #include <stack>
 #include <string>
 #include <unordered_set>
@@ -168,14 +169,14 @@ void SLR1Parser::solveLRConflicts(const state& st) {
 
 void SLR1Parser::make_parser() {
     makeInitialState();
-    std::stack<unsigned int> pending;
+    std::queue<unsigned int> pending;
     pending.push(0);
     unsigned int current = 0;
     size_t       i       = 1;
 
     do {
         std::unordered_set<std::string> nextSymbols;
-        current = pending.top();
+        current = pending.front();
         pending.pop();
         auto it = std::find_if(
             states_.begin(), states_.end(),
