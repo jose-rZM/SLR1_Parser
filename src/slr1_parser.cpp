@@ -138,12 +138,10 @@ void SLR1Parser::debugTable() const {
 void SLR1Parser::makeInitialState() {
     state initial;
     initial.id = 0;
-    for (const auto& rule : gr_.g_) {
-        std::string antecedent = rule.first;
-        for (const auto& production : rule.second) {
-            initial.items.insert({antecedent, production, 0});
-        }
-    }
+    auto axiom = gr_.g_.at(gr_.AXIOM_);
+    // the axiom must be unique
+    initial.items.insert({gr_.AXIOM_, axiom[0], 0});
+    closure(initial.items);
     states_.insert(initial);
 }
 
