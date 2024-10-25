@@ -1,0 +1,12 @@
+terminal function f;
+terminal ap (;
+terminal cp );
+terminal n n;
+terminal plus +;
+start with S;
+;
+S -> A $;
+A -> n B;
+A -> function ap A cp B;
+B -> plus A;
+B ->;

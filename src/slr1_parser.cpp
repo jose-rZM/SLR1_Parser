@@ -326,7 +326,13 @@ void SLR1Parser::follow_util(
             if (next_it == rule.second.cend()) {
                 follow_util(rule.first, visited, next_symbols);
             } else {
-                next_symbols.merge(header({*next_it}));
+                next_symbols.merge(header(
+                    std::vector<std::string>(next_it, rule.second.cend())));
+                if (next_symbols.find(symbol_table::EPSILON_) !=
+                    next_symbols.end()) {
+                    next_symbols.erase(symbol_table::EPSILON_);
+                    follow_util(rule.first, visited, next_symbols);
+                }
             }
             it = std::next(it);
         }
