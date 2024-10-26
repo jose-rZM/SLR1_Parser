@@ -34,7 +34,12 @@ class SLR1Parser {
      * grammar obviously is not LL1, but this will provoke an infinite loop.
      */
     std::unordered_set<std::string>
-    header(const std::vector<std::string>& rule) const;
+    first(const std::vector<std::string>& rule) const;
+    /**
+     * Compute the first sets of all non terminal symbols following the least
+     * fixed point solution
+     */
+    void compute_first_sets();
     /**
      *
      * @param arg symbol to calculate next symbols for
@@ -54,10 +59,11 @@ class SLR1Parser {
     void makeInitialState();
     void make_parser();
 
-    grammar                   gr_;
-    std::string               grammar_file_;
-    std::string               text_file_;
-    action_table              actions_;
+    grammar     gr_;
+    std::string grammar_file_;
+    std::string text_file_;
+    std::unordered_map<std::string, std::unordered_set<std::string>> first_sets;
+    action_table                                                     actions_;
     transition_table          transitions_;
     std::unordered_set<state> states_;
 };
