@@ -8,9 +8,9 @@
 #include "../include/slr1_parser.hpp"
 
 int main(int argc, char** argv) {
-    //if (argc != 2) return (1);
+    if (argc != 2) return (1);
 
-    std::string grammar_file = "owo.txt";
+    std::string grammar_file {argv[1]};
     SLR1Parser slrparser{grammar_file};
     if (!slrparser.make_parser()) {
         std::cout << "Conflict\n";
