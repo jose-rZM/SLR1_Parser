@@ -1,0 +1,16 @@
+terminal a a;
+terminal c c;
+start with S;
+;
+S -> A $;
+A -> A B;
+A ->;
+B -> C E;
+B -> C B E;
+C -> D;
+C -> C D;
+D -> D c;
+D ->;
+E -> a;
+E -> a E;
+;

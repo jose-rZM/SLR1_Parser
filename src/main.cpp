@@ -8,14 +8,22 @@
 #include "../include/slr1_parser.hpp"
 
 int main(int argc, char** argv) {
-    if (argc != 2)
-        return (1);
+    //if (argc != 2) return (1);
 
-    std::string grammar_file = argv[1];
-    SLR1Parser  slrparser{grammar_file};
-    slrparser.make_parser();
+    std::string grammar_file = "owo.txt";
+    SLR1Parser slrparser{grammar_file};
+    if (!slrparser.make_parser()) {
+        std::cout << "Conflict\n";
+        return 1;
+    }
     slrparser.debugStates();
     slrparser.debugTable();
     slrparser.debugActions();
+    std::vector<std::string> input{"IDENT", "mult", "IDENT"};
+    if (slrparser.parse(input)) {
+        std::cout << "Parsing was successful" << std::endl;
+    } else {
+        std::cout << "Error while parsing" << std::endl;
+    }
     return (0);
 }

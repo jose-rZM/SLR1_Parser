@@ -1,4 +1,3 @@
-#include "../include/symbol_table.hpp"
 #include <algorithm>
 #include <iomanip>
 #include <iostream>
@@ -12,6 +11,7 @@
 
 #include "../include/grammar.hpp"
 #include "../include/slr1_parser.hpp"
+#include "../include/symbol_table.hpp"
 
 SLR1Parser::SLR1Parser(grammar gr, std::string text_file)
     : gr_(std::move(gr)), text_file_(std::move(text_file)) {}
@@ -70,19 +70,19 @@ void SLR1Parser::debugActions() const {
             for (const auto& col : columns) {
                 auto cellIt = rowIt->second.find(col.first);
                 if (cellIt != rowIt->second.end()) {
-                    switch (cellIt->second) {
-                    case Action::Accept:
-                        std::cout << std::setw(10) << "A" << " |";
-                        break;
-                    case Action::Reduce:
-                        std::cout << std::setw(10) << "R" << " |";
-                        break;
-                    case Action::Shift:
-                        std::cout << std::setw(10) << "S" << " |";
-                        break;
-                    default:
-                        std::cout << std::setw(10) << "-" << " |";
-                        break;
+                    switch (cellIt->second.action) {
+                        case Action::Accept:
+                            std::cout << std::setw(10) << "A" << " |";
+                            break;
+                        case Action::Reduce:
+                            std::cout << std::setw(10) << "R" << " |";
+                            break;
+                        case Action::Shift:
+                            std::cout << std::setw(10) << "S" << " |";
+                            break;
+                        default:
+                            std::cout << std::setw(10) << "-" << " |";
+                            break;
                     }
                 } else {
                     std::cout << std::setw(10) << "-" << " |";
@@ -94,6 +94,20 @@ void SLR1Parser::debugActions() const {
             }
         }
         std::cout << std::endl;
+    }
+    for (const auto& row : actions_) {
+        unsigned int state = row.first;
+        for (const auto& cell : row.second) {
+            if (cell.second.action == Action::Reduce) {
+                std::cout << "I" << state << ", " << cell.first
+                          << " -> Reduce ( ";
+                std::cout << cell.second.item->antecedent << " -> ";
+                for (const std::string& symbol : cell.second.item->consequent) {
+                    std::cout << symbol << " ";
+                }
+                std::cout << ")\n";
+            }
+        }
     }
 }
 
@@ -146,34 +160,51 @@ void SLR1Parser::makeInitialState() {
     states_.insert(initial);
 }
 
-void SLR1Parser::solveLRConflicts(const state& st) {
+bool SLR1Parser::solveLRConflicts(const state& st) {
     for (const Lr0Item& item : st.items) {
         if (item.isComplete()) {
             if (item.antecedent == gr_.AXIOM_) {
-                actions_[st.id][symbol_table::EOL_] = Action::Accept;
+                actions_[st.id][symbol_table::EOL_] = {nullptr, Action::Accept};
             } else {
                 std::unordered_set<std::string> follows =
                     follow(item.antecedent);
                 for (const std::string& sym : follows) {
-                    actions_[st.id][sym] = Action::Reduce;
+                    if (std::find_if(actions_[st.id].begin(),
+                                     actions_[st.id].end(),
+                                     [&sym](const auto& column) -> bool {
+                                         return sym == column.first;
+                                     }) != actions_[st.id].end()) {
+                        debugStates();
+                        return false;
+                    }
+                    actions_[st.id][sym] = {&item, Action::Reduce};
                 }
             }
         } else {
             std::string nextToDot = item.nextToDot();
             if (symbol_table::is_terminal(item.nextToDot())) {
-                actions_[st.id][item.nextToDot()] = Action::Shift;
+                if (std::find_if(actions_[st.id].begin(), actions_[st.id].end(),
+                                 [&nextToDot](const auto& column) -> bool {
+                                     return nextToDot == column.first;
+                                 }) != actions_[st.id].end()) {
+                    debugStates();
+                    debugTable();
+                    return false;
+                }
+                actions_[st.id][item.nextToDot()] = {nullptr, Action::Shift};
             }
         }
     }
+    return true;
 }
 
-void SLR1Parser::make_parser() {
+bool SLR1Parser::make_parser() {
     compute_first_sets();
     makeInitialState();
     std::queue<unsigned int> pending;
     pending.push(0);
     unsigned int current = 0;
-    size_t       i       = 1;
+    size_t i = 1;
 
     do {
         std::unordered_set<std::string> nextSymbols;
@@ -186,7 +217,6 @@ void SLR1Parser::make_parser() {
             break;
         }
         const state& qi = *it;
-        solveLRConflicts(qi);
         std::for_each(qi.items.begin(), qi.items.end(),
                       [&](const Lr0Item& item) -> void {
                           std::string next = item.nextToDot();
@@ -232,6 +262,43 @@ void SLR1Parser::make_parser() {
         }
         current++;
     } while (!pending.empty());
+    for (const state& st : states_) {
+        if (!solveLRConflicts(st)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool SLR1Parser::parse(const std::vector<std::string>& input) const {
+    std::stack<unsigned int> states;
+    std::stack<std::string> symbols;
+    size_t current{0};
+    states.push(0);
+    symbols.push(symbol_table::EOL_);
+    while (!input.empty() || input[current] != symbol_table::EOL_) {
+        Action act = actions_.at(states.top()).at(input[current]).action;
+        if (act == Action::Shift) {
+            symbols.push(input[current]);
+            states.push(transitions_.at(states.top()).at(input[current]));
+            ++current;
+        } else if (act == Action::Reduce) {
+            const Lr0Item* rule =
+                actions_.at(states.top()).at(input[current]).item;
+            states.pop();
+            size_t i{rule->consequent.size()};
+            while (i-- > 0) {
+                symbols.pop();
+            }
+            symbols.push(rule->antecedent);
+            states.push(transitions_.at(states.top()).at(symbols.top()));
+        } else if (act == Action::Accept) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    return true;
 }
 
 void SLR1Parser::closure(std::unordered_set<Lr0Item>& items) const {
@@ -239,8 +306,8 @@ void SLR1Parser::closure(std::unordered_set<Lr0Item>& items) const {
     closureUtil(items, items.size(), visited);
 }
 
-void SLR1Parser::closureUtil(std::unordered_set<Lr0Item>&     items,
-                             unsigned int                     size,
+void SLR1Parser::closureUtil(std::unordered_set<Lr0Item>& items,
+                             unsigned int size,
                              std::unordered_set<std::string>& visited) const {
     std::unordered_set<Lr0Item> newItems;
 
@@ -252,23 +319,22 @@ void SLR1Parser::closureUtil(std::unordered_set<Lr0Item>&     items,
             const std::vector<production>& rules = gr_.g_.at(next);
             std::for_each(rules.begin(), rules.end(),
                           [&](const auto& rule) -> void {
-                              newItems.insert({item.nextToDot(), rule, 0});
+                              newItems.insert({item.nextToDot(), rule});
                           });
             visited.insert(next);
         }
     }
     items.insert(newItems.begin(), newItems.end());
-    if (size != items.size())
-        closureUtil(items, items.size(), visited);
+    if (size != items.size()) closureUtil(items, items.size(), visited);
 }
 
-std::unordered_set<std::string>
-SLR1Parser::first(const std::vector<std::string>& rule) const {
+std::unordered_set<std::string> SLR1Parser::first(
+    const std::vector<std::string>& rule) const {
     if (rule.size() == 1 && rule[0] == symbol_table::EPSILON_) {
         return {symbol_table::EPSILON_};
     }
     std::unordered_set<std::string> ret;
-    size_t                          i{0};
+    size_t i{0};
     for (const std::string& symbol : rule) {
         if (symbol_table::is_terminal(symbol)) {
             ret.insert(symbol);
@@ -318,9 +384,8 @@ void SLR1Parser::compute_first_sets() {
     first_sets[gr_.AXIOM_].erase(symbol_table::EOL_);
 }
 
-std::unordered_set<std::string>
-SLR1Parser::follow(const std::string& arg) const {
-
+std::unordered_set<std::string> SLR1Parser::follow(
+    const std::string& arg) const {
     std::unordered_set<std::string> next_symbols;
     std::unordered_set<std::string> visited;
     if (arg == gr_.AXIOM_) {

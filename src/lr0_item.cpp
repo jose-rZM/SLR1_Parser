@@ -1,6 +1,6 @@
 #include <cstddef>
 #include <functional>
-#include <iostream> // DEBUG ONLY
+#include <iostream>  // DEBUG ONLY
 #include <string>
 #include <utility>
 #include <vector>
@@ -9,12 +9,21 @@
 #include "../include/symbol_table.hpp"
 
 Lr0Item::Lr0Item(std::string antecedent, std::vector<std::string> consequent)
-    : antecedent(std::move(antecedent)), consequent(std::move(consequent)) {}
+    : antecedent(std::move(antecedent)), consequent(std::move(consequent)) {
+    if (this->consequent.size() == 1 && this->consequent[0] == symbol_table::EPSILON_) {
+        dot = 1;
+    }
+}
 
 Lr0Item::Lr0Item(std::string antecedent, std::vector<std::string> consequent,
                  unsigned int dot)
-    : antecedent(std::move(antecedent)), consequent(std::move(consequent)),
-      dot(dot) {}
+    : antecedent(std::move(antecedent)),
+      consequent(std::move(consequent)),
+      dot(dot) {
+    if (this->consequent.size() == 1 && this->consequent[0] == symbol_table::EPSILON_) {
+        dot = 1;
+    }
+}
 
 std::string Lr0Item::nextToDot() const {
     if (dot == consequent.size()) {
@@ -23,12 +32,13 @@ std::string Lr0Item::nextToDot() const {
     return consequent[dot];
 }
 
-void Lr0Item::advanceDot() {
-    dot++;
-}
+void Lr0Item::advanceDot() { dot++; }
 
 bool Lr0Item::isComplete() const {
-    return dot == consequent.size();
+    return dot >= consequent.size() ||
+           (consequent.size() == 1 &&
+            consequent[0] == symbol_table::EPSILON_) ||
+           nextToDot() == symbol_table::EOL_;
 }
 
 void Lr0Item::printItem() const {
@@ -64,4 +74,4 @@ std::size_t hash<Lr0Item>::operator()(const Lr0Item& item) const {
 
     return seed;
 }
-} // namespace std
+}  // namespace std
