@@ -1,6 +1,4 @@
 #pragma once
-#include <map>
-#include <regex>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -9,62 +7,87 @@
 enum symbol_type { NO_TERMINAL, TERMINAL };
 
 struct symbol_table {
+    /// @brief End-of-line symbol used in parsing, initialized as "$".
     inline static std::string EOL_{"$"};
+
+    /// @brief Epsilon symbol, representing empty transitions, initialized as
+    /// "EPSILON".
     inline static std::string EPSILON_{"EPSILON"};
+
+    /// @brief Main symbol table, mapping identifiers to a pair of symbol type
+    /// and its regex.
     inline static std::unordered_map<std::string,
                                      std::pair<symbol_type, std::string>>
         st_{{EOL_, {TERMINAL, EOL_}}, {EPSILON_, {TERMINAL, EPSILON_}}};
-    inline static std::unordered_map<std::string, int> token_types_{{EOL_, 1}};
-    inline static std::unordered_map<int, std::string> token_types_r_{
+
+    /// @brief Token types, mapping each symbol to a unique integer ID.
+    inline static std::unordered_map<std::string, unsigned long> token_types_{
+        {EOL_, 1}};
+
+    /// @brief Reverse mapping from integer token IDs back to symbols.
+    inline static std::unordered_map<unsigned long, std::string> token_types_r_{
         {1, EOL_}};
-    inline static std::vector<int> order_{1};
-    inline static int              i_{2};
+
+    /// @brief Tracks insertion order of token types.
+    inline static std::vector<unsigned long> order_{1};
+
+    /// @brief Current index for assigning new token IDs, starting from 2.
+    inline static unsigned long i_{2};
 
     /**
+     * @brief Adds a terminal symbol with its associated regex to the symbol
+     * table.
      *
-     * @param identifier of the terminal symbol
-     * @param regex  of the terminal symbol
-     * Stores the terminal symbol alongside its regex.
-     * Also, it updates the token types, it also keeps track of the insertion
-     * order.
-     */
-    static void put_symbol(const std::string& identifier,
-                           const std::string& regex);
-    /**
+     * Updates the token type mappings and tracks insertion order.
      *
-     * @param identifier of the no terminal symbol
-     * Stores the no terminal symbol in the symbol table.
+     * @param identifier Name of the terminal symbol.
+     * @param regex Regular expression representing the terminal symbol.
      */
-    static void put_symbol(const std::string& identifier);
-    /**
-     *
-     * @param s identifier
-     * @return true if s is in symbol table
-     */
-    static bool in(const std::string& s);
+    static void PutSymbol(const std::string& identifier,
+                          const std::string& regex);
 
     /**
+     * @brief Adds a non-terminal symbol to the symbol table.
      *
-     * @param s identifier
-     * @return true if s is terminal symbol
+     * @param identifier Name of the non-terminal symbol.
      */
-    static bool is_terminal(const std::string& s);
-    /**
-     *
-     * @param terminal symbol to retrieve the regex from
-     * @return regex of the symbol
-     */
-    static std::string get_value(const std::string& terminal);
+    static void PutSymbol(const std::string& identifier);
 
     /**
-     * Print all symbols in symbol table
+     * @brief Checks if a symbol exists in the symbol table.
+     *
+     * @param s Symbol identifier to search.
+     * @return true if the symbol is present, otherwise false.
      */
-    static void debug();
+    static bool In(const std::string& s);
 
     /**
+     * @brief Checks if a symbol is a terminal.
      *
-     * @param eol string
-     * Set the EOL string.
+     * @param s Symbol identifier to check.
+     * @return true if the symbol is terminal, otherwise false.
      */
-    static void set_eol(const std::string& eol);
+    static bool IsTerminal(const std::string& s);
+
+    /**
+     * @brief Retrieves the regex pattern for a terminal symbol.
+     *
+     * @param terminal Terminal symbol identifier.
+     * @return Regex pattern associated with the terminal symbol.
+     */
+    static std::string GetValue(const std::string& terminal);
+
+    /**
+     * @brief Prints all symbols and their properties in the symbol table.
+     *
+     * Outputs the symbol table for debugging purposes.
+     */
+    static void Debug();
+
+    /**
+     * @brief Sets the end-of-line symbol.
+     *
+     * @param eol String to use as the new end-of-line symbol.
+     */
+    static void SetEol(const std::string& eol);
 };
